@@ -77,15 +77,24 @@ export async function saveArtifacts(paperId: number, artifacts: ProcessedArtifac
 }
 
 export async function saveUsageEvents(paperId: number, events: UsageEvent[]): Promise<void> {
-  for (const event of events) {
-    await pool.query(
-      `
-        INSERT INTO service_usage (paper_id, service, request_count, payment_amount, tx_hash, metadata)
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-      `,
-      [paperId, event.service, event.requestCount, event.paymentAmount, event.txHash, JSON.stringify(event.metadata ?? {})]
-    );
+  if (events.length === 0) {
+    return;
   }
+
+  const values: unknown[] = [];
+  const valueTuples = events.map((event, index) => {
+    const offset = index * 6;
+    values.push(paperId, event.service, event.requestCount, event.paymentAmount, event.txHash, JSON.stringify(event.metadata ?? {}));
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}::jsonb)`;
+  });
+
+  await pool.query(
+    `
+      INSERT INTO service_usage (paper_id, service, request_count, payment_amount, tx_hash, metadata)
+      VALUES ${valueTuples.join(", ")}
+    `,
+    values
+  );
 }
 
 export async function fetchRecentEmbeddings(limit = 25): Promise<number[][]> {
@@ -105,20 +114,29 @@ export async function fetchRecentEmbeddings(limit = 25): Promise<number[][]> {
 }
 
 export async function upsertSapTools(tools: SapTool[]): Promise<void> {
-  for (const tool of tools) {
-    await pool.query(
-      `
-        INSERT INTO sap_tools (tool_id, name, description, endpoint, raw, last_seen_at)
-        VALUES ($1, $2, $3, $4, $5::jsonb, NOW())
-        ON CONFLICT (tool_id)
-        DO UPDATE SET
-          name = EXCLUDED.name,
-          description = EXCLUDED.description,
-          endpoint = EXCLUDED.endpoint,
-          raw = EXCLUDED.raw,
-          last_seen_at = NOW()
-      `,
-      [tool.toolId, tool.name, tool.description, tool.endpoint, JSON.stringify(tool.raw)]
-    );
+  if (tools.length === 0) {
+    return;
   }
+
+  const values: unknown[] = [];
+  const valueTuples = tools.map((tool, index) => {
+    const offset = index * 5;
+    values.push(tool.toolId, tool.name, tool.description, tool.endpoint, JSON.stringify(tool.raw));
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}::jsonb, NOW())`;
+  });
+
+  await pool.query(
+    `
+      INSERT INTO sap_tools (tool_id, name, description, endpoint, raw, last_seen_at)
+      VALUES ${valueTuples.join(", ")}
+      ON CONFLICT (tool_id)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        description = EXCLUDED.description,
+        endpoint = EXCLUDED.endpoint,
+        raw = EXCLUDED.raw,
+        last_seen_at = NOW()
+    `,
+    values
+  );
 }
