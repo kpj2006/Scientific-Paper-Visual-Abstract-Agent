@@ -30,7 +30,7 @@ function asArray<T>(value: T | T[] | undefined): T[] {
 }
 
 export async function fetchNewArxivEntries(maxResults: number): Promise<ArxivEntry[]> {
-  const url = new URL("http://export.arxiv.org/api/query");
+  const url = new URL("https://export.arxiv.org/api/query");
   url.searchParams.set("search_query", env.ARXIV_QUERY);
   url.searchParams.set("start", "0");
   url.searchParams.set("max_results", String(maxResults));
