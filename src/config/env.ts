@@ -21,7 +21,7 @@ const envSchema = z.object({
   SYNAPSE_NETWORK: z.enum(["mainnet", "devnet", "testnet"]).default("mainnet"),
   SYNAPSE_REGION: z.enum(["US", "EU"]).default("US"),
   SYNAPSE_RPC_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
-  SYNAPSE_RPC_MAX_RETRIES: z.coerce.number().int().positive().default(3),
+  SYNAPSE_RPC_MAX_RETRIES: z.coerce.number().int().min(1).max(10).default(3),
   SYNAPSE_CLUSTER: z.string().default("mainnet-beta"),
   PIPELINE_CRON: z.string().default("*/30 * * * *"),
   MAX_PAPERS_PER_RUN: z.coerce.number().int().positive().default(10),

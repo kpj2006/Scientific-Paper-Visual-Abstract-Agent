@@ -20,7 +20,7 @@ async function requestWithRetry(url: string, init?: RequestInit, options?: HttpR
       const response = await fetch(url, { ...init, signal });
 
       if (!response.ok && isRetriableStatus(response.status) && attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)));
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** attempt));
         continue;
       }
 
@@ -28,9 +28,9 @@ async function requestWithRetry(url: string, init?: RequestInit, options?: HttpR
     } catch (error) {
       lastError = error;
       if (attempt >= maxRetries) {
-        throw error;
+        break;
       }
-      await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)));
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** attempt));
     }
   }
 

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { env } from "../config/env.js";
 import { fetchJson, fetchText } from "../lib/http.js";
 import { logger } from "../lib/logger.js";
@@ -26,13 +27,16 @@ export class SapGatewayClient {
     let match: RegExpExecArray | null;
 
     while ((match = linkRegex.exec(markdown)) !== null) {
-      const [_, label, url] = match;
+      const label = match[1];
+      const url = match[2];
       if (!label || !url || seen.has(url)) {
         continue;
       }
 
       seen.add(url);
-      const toolId = `skills-${label}-${url}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const labelSlug = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 40);
+      const urlHash = crypto.createHash("sha256").update(url).digest("hex").slice(0, 12);
+      const toolId = `skills-${labelSlug || "doc"}-${urlHash}`;
       tools.push({
         toolId: toolId || `skills-${tools.length + 1}`,
         name: label.trim(),
@@ -102,15 +106,15 @@ export class SapGatewayClient {
       const createSapClient = sdk.createSapClient as ((rpcUrl: string) => unknown) | undefined;
 
       if (createSapClient) {
-        createSapClient(rpcEndpoint);
+        const sapClient = createSapClient(rpcEndpoint);
+        logger.info({ sapClientInitialized: Boolean(sapClient) }, "SAP SDK runtime client created");
       }
 
       logger.info(
         {
           sdkExports: Object.keys(sdk),
           cluster: env.SYNAPSE_CLUSTER,
-          rpcUrl: rpcEndpoint,
-          hasApiKey: Boolean(env.OOBE_API_KEY)
+          rpcUrl: rpcEndpoint
         },
         "SAP SDK detected; runtime registration client initialized"
       );
@@ -120,7 +124,8 @@ export class SapGatewayClient {
   }
 
   async discoverTools(): Promise<SapTool[]> {
-    const discoveredTools = [...(await this.discoverGatewayTools()), ...(await this.discoverSkillsTools())];
+    const [gatewayTools, skillsTools] = await Promise.all([this.discoverGatewayTools(), this.discoverSkillsTools()]);
+    const discoveredTools = [...gatewayTools, ...skillsTools];
     const byKey = new Map<string, SapTool>();
 
     for (const tool of discoveredTools) {
