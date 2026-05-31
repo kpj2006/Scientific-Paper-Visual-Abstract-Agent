@@ -89,7 +89,7 @@ export async function saveUsageEvents(paperId: number, events: UsageEvent[]): Pr
 }
 
 export async function fetchRecentEmbeddings(limit = 25): Promise<number[][]> {
-  const result = await pool.query(
+  const result = await pool.query<{ embedding: unknown }>(
     `
       SELECT embedding
       FROM paper_outputs
@@ -100,7 +100,7 @@ export async function fetchRecentEmbeddings(limit = 25): Promise<number[][]> {
   );
 
   return result.rows
-    .map((row) => row.embedding as unknown)
+    .map((row) => row.embedding)
     .filter((embedding): embedding is number[] => Array.isArray(embedding));
 }
 

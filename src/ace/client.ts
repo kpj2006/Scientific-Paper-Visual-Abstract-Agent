@@ -45,7 +45,7 @@ export class AceWorkflowClient {
   private headers(): HeadersInit {
     return {
       "Content-Type": "application/json",
-      ...(env.ACE_API_KEY ? { Authorization: `****** } : {})
+      ...(env.ACE_API_KEY ? { Authorization: "Bearer " + env.ACE_API_KEY } : {})
     };
   }
 

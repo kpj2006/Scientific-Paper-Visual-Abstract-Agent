@@ -1,22 +1,24 @@
 import { Queue, Worker } from "bullmq";
-import IORedis from "ioredis";
 import { env } from "../config/env.js";
 import { logger } from "../lib/logger.js";
 import { processPaper } from "../pipeline/process-paper.js";
 import { pool } from "../db.js";
 
-const connection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
+const connection = {
+  url: env.REDIS_URL,
+  maxRetriesPerRequest: null as null
+};
 
 export const PAPER_QUEUE_NAME = "paper-processing";
 
-export const paperQueue = new Queue<{ paperId: number }>(PAPER_QUEUE_NAME, { connection });
+export const paperQueue = new Queue<{ paperId: number }, void, "process-paper">(PAPER_QUEUE_NAME, { connection });
 
 export async function enqueuePaperJob(paperId: number): Promise<void> {
   await paperQueue.add("process-paper", { paperId }, { removeOnComplete: 200, removeOnFail: 200 });
 }
 
-export function startPaperWorker(): Worker<{ paperId: number }> {
-  const worker = new Worker(
+export function startPaperWorker(): Worker<{ paperId: number }, void, "process-paper"> {
+  const worker = new Worker<{ paperId: number }, void, "process-paper">(
     PAPER_QUEUE_NAME,
     async (job) => {
       const result = await pool.query(
