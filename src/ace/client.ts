@@ -11,7 +11,7 @@ interface SettledPayment {
 
 function deterministicVector(seed: string, length = 16): number[] {
   const bytes = crypto.createHash("sha256").update(seed).digest();
-  return Array.from({ length }, (_, index) => (bytes[index] ?? 0) / 255);
+  return Array.from({ length }, (_, index) => bytes[index % bytes.length]! / 255);
 }
 
 export class AceWorkflowClient {

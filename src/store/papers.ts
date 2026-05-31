@@ -1,6 +1,9 @@
 import { pool } from "../db.js";
 import type { PaperContext, PaperRecord, ProcessedArtifacts, SapTool, UsageEvent } from "../types.js";
 
+const USAGE_EVENT_PARAM_COUNT = 6;
+const SAP_TOOL_PARAM_COUNT = 5;
+
 interface PaperInput {
   arxivId: string;
   title: string;
@@ -83,7 +86,7 @@ export async function saveUsageEvents(paperId: number, events: UsageEvent[]): Pr
 
   const values: unknown[] = [];
   const valueTuples = events.map((event, index) => {
-    const offset = index * 6;
+    const offset = index * USAGE_EVENT_PARAM_COUNT;
     values.push(paperId, event.service, event.requestCount, event.paymentAmount, event.txHash, JSON.stringify(event.metadata ?? {}));
     return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}::jsonb)`;
   });
@@ -120,7 +123,7 @@ export async function upsertSapTools(tools: SapTool[]): Promise<void> {
 
   const values: unknown[] = [];
   const valueTuples = tools.map((tool, index) => {
-    const offset = index * 5;
+    const offset = index * SAP_TOOL_PARAM_COUNT;
     values.push(tool.toolId, tool.name, tool.description, tool.endpoint, JSON.stringify(tool.raw));
     return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}::jsonb, NOW())`;
   });

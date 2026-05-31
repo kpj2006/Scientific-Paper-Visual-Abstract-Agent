@@ -5,7 +5,11 @@ import { fetchText } from "../lib/http.js";
 import type { PaperContext } from "../types.js";
 
 function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
+  const normalized = text.trim();
+  if (!normalized) {
+    return 0;
+  }
+  return normalized.split(/\s+/).length;
 }
 
 function trimWords(text: string, maxWords: number): string {

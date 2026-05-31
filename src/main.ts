@@ -8,19 +8,19 @@ import { startWorker } from "./worker.js";
 async function bootstrap(): Promise<void> {
   await migrate();
 
-  const mode = process.argv[2] ?? "dev";
+  const runMode = process.argv[2] ?? "dev";
 
-  if (mode === "scheduler") {
+  if (runMode === "scheduler") {
     startScheduler();
     return;
   }
 
-  if (mode === "worker") {
+  if (runMode === "worker") {
     startWorker();
     return;
   }
 
-  if (mode === "once") {
+  if (runMode === "once") {
     const enqueued = await runSchedulerCycle();
     logger.info({ enqueued }, "One-off cycle finished");
     return;
