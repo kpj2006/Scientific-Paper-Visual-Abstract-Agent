@@ -38,7 +38,7 @@ export class SapGatewayClient {
       const urlHash = crypto.createHash("sha256").update(url).digest("hex").slice(0, 12);
       const toolId = `skills-${labelSlug || "doc"}-${urlHash}`;
       tools.push({
-        toolId: toolId || `skills-${tools.length + 1}`,
+        toolId,
         name: label.trim(),
         description: "Discovered from Synapse SAP skills reference",
         endpoint: url,

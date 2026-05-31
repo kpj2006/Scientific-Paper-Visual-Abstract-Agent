@@ -2,6 +2,7 @@ interface HttpRequestOptions {
   timeoutMs?: number;
   maxRetries?: number;
   retryDelayMs?: number;
+  maxRetryDelayMs?: number;
 }
 
 function isRetriableStatus(status: number): boolean {
@@ -12,6 +13,7 @@ async function requestWithRetry(url: string, init?: RequestInit, options?: HttpR
   const timeoutMs = options?.timeoutMs ?? 15000;
   const maxRetries = options?.maxRetries ?? 0;
   const retryDelayMs = options?.retryDelayMs ?? 300;
+  const maxRetryDelayMs = options?.maxRetryDelayMs ?? 5000;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
@@ -20,7 +22,8 @@ async function requestWithRetry(url: string, init?: RequestInit, options?: HttpR
       const response = await fetch(url, { ...init, signal });
 
       if (!response.ok && isRetriableStatus(response.status) && attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** attempt));
+        const delay = Math.min(retryDelayMs * 2 ** attempt, maxRetryDelayMs);
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
 
@@ -30,7 +33,8 @@ async function requestWithRetry(url: string, init?: RequestInit, options?: HttpR
       if (attempt >= maxRetries) {
         break;
       }
-      await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** attempt));
+      const delay = Math.min(retryDelayMs * 2 ** attempt, maxRetryDelayMs);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
