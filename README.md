@@ -44,6 +44,7 @@ Cron Scheduler
 ## Setup
 
 1. Copy `.env.example` to `.env`.
+   - Set `OOBE_API_KEY` for authenticated Synapse RPC usage.
 2. Start PostgreSQL and Redis:
    - `docker compose up -d`
 3. Install dependencies:
@@ -62,3 +63,4 @@ Cron Scheduler
 
 - All service usage events store service name, request count, payment amount, and transaction hash.
 - If external endpoints are unavailable, adapters fall back safely so the local pipeline remains runnable.
+- SAP discovery now uses both JSON tool endpoints and `https://synapse.oobeprotocol.ai/skills.md`-style markdown fallback.
