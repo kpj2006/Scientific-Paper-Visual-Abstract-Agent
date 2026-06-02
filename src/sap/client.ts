@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { createRequire } from "node:module";
 import { env } from "../config/env.js";
 import { fetchJson, fetchText } from "../lib/http.js";
 import { logger } from "../lib/logger.js";
@@ -84,7 +85,7 @@ export class SapGatewayClient {
   }
 
   async registerAgent(): Promise<void> {
-    const synapse = createSynapseClient();
+    const synapse = await createSynapseClient();
     const rpcEndpoint = getSynapseRpcEndpoint();
 
     try {
@@ -102,7 +103,8 @@ export class SapGatewayClient {
     }
 
     try {
-      const sdk = (await import("@oobe-protocol-labs/synapse-sap-sdk")) as Record<string, unknown>;
+      const require = createRequire(import.meta.url);
+      const sdk = require("@oobe-protocol-labs/synapse-sap-sdk") as Record<string, unknown>;
       const createSapClient = sdk.createSapClient as ((rpcUrl: string) => unknown) | undefined;
 
       if (createSapClient) {
@@ -119,7 +121,7 @@ export class SapGatewayClient {
         "SAP SDK detected; runtime registration client initialized"
       );
     } catch (error) {
-      logger.warn({ error }, "SAP SDK unavailable at runtime; continuing with gateway discovery");
+      logger.warn({ error: (error as Error).message ?? error }, "SAP SDK unavailable at runtime; continuing with gateway discovery");
     }
   }
 

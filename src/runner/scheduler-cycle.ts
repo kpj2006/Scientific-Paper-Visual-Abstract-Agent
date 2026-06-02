@@ -3,7 +3,7 @@ import { env } from "../config/env.js";
 import { logger } from "../lib/logger.js";
 import { enqueuePaperJob } from "../queue/paper-queue.js";
 import { SapGatewayClient } from "../sap/client.js";
-import { upsertPaper, upsertSapTools } from "../store/papers.js";
+import { fetchUsageAnalytics, upsertPaper, upsertSapTools } from "../store/papers.js";
 
 export async function runSchedulerCycle(): Promise<number> {
   const sap = new SapGatewayClient();
@@ -32,6 +32,21 @@ export async function runSchedulerCycle(): Promise<number> {
     enqueued += 1;
   }
 
-  logger.info({ fetched: entries.length, enqueued, discoveredSapTools: tools.length }, "Scheduler cycle completed");
+  const analytics = await fetchUsageAnalytics();
+  logger.info(
+    {
+      fetched: entries.length,
+      enqueued,
+      discoveredSapTools: tools.length,
+      usage: {
+        totalRequests: analytics.totalRequests,
+        totalPaymentAmount: analytics.totalPaymentAmount,
+        papersProcessed: analytics.papersProcessed,
+        papersFailed: analytics.papersFailed,
+        byService: analytics.byService
+      }
+    },
+    "Scheduler cycle completed"
+  );
   return enqueued;
 }
